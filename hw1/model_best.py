@@ -20,7 +20,7 @@ model_name = ["best_1","best_2","best_3"]
 dim_dict = {"mfcc" : 39, "fbank" : 69}
 
 # parameter
-nb_epoch = 1
+nb_epoch = 500
 nb_batch = 20
 split_ratio = 0.33
 

@@ -20,7 +20,7 @@ model_name = "rnn"
 dim_dict = {"mfcc" : 39, "fbank" : 69}
 
 # parameter
-nb_epoch = 1
+nb_epoch = 500
 nb_batch = 15
 split_ratio = 0.33
 
