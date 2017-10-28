@@ -24,7 +24,6 @@ def average(model_1,model_2,model_3,Ix2label):
 	result_1 = model_1.predict(Xtest)
 	result_2 = model_2.predict(Xtest)
 	result_3 = model_3.predict(Xtest)
-	#result_4 = model_3.predict(Xtest)
 
 	result = []
 	for i in range(0,Xtest.shape[0]):
@@ -107,13 +106,8 @@ model_3.load_weights("model/%s_model_weight.hdf5" % model_name[2])
 model_3.summary()
 print('Model_3 loaded.')
 
-# model_4 = model_from_json(json.load(open("model/%s.json" % model_name[3])))
-# model_4.load_weights("model/%s_model_weight.hdf5" % model_name[3])
-# model_4.summary()
-# print('Model_4 loaded.')
-
-result = voting(model_1,model_2,model_3,Ix2label)
-#result = average(model_1,model_2,model_3,Ix2label)
+#result = voting(model_1,model_2,model_3,Ix2label)
+result = average(model_1,model_2,model_3,Ix2label)
 
 Ix2TestId = {}
 for key in testId2Ix.keys():
