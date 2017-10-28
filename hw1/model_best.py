@@ -128,6 +128,6 @@ def fit(model,earlystopping,checkpoint,name):
 	#print(score)
 	return score
 
-print( fit( get_model(model_name[0]) ) )
-print( fit( get_model(model_name[1]) ) )
-print( fit( get_model(model_name[2]) ) )
+for i in range(0,3):
+	model,earlystopping,checkpoint,name = get_model(model_name[i])
+	print( fit(model,earlystopping,checkpoint,name) )
