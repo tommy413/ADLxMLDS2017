@@ -170,7 +170,7 @@ trainId2Ix,testId2Ix,label2Ix,Xtrain,Xtest,Ytrain= feature_input(inputType)
 
 outputPath = "feature/%s" % inputType
 if not (os.path.exists(outputPath)):
-	os.mkdir(outputPath)
+	os.makedirs(outputPath)
 
 pkl.dump(trainId2Ix, open("%s/trainId2Ix.pkl" % outputPath,'wb'), pkl.HIGHEST_PROTOCOL)
 pkl.dump(testId2Ix, open("%s/testId2Ix.pkl" % outputPath,'wb'), pkl.HIGHEST_PROTOCOL)
