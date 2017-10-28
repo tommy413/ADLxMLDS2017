@@ -97,7 +97,7 @@ hist = model.fit(Xtrain, Ytrain,
                  callbacks=[earlystopping,checkpoint])
 
 if not (os.path.exists("history/")):
-	os.makedirs(outputPath)("history/")
+	os.makedirs("history/")
 pkl.dump(hist, open("history/%s.pkl" % model_name,'wb'), pkl.HIGHEST_PROTOCOL)
 
 model.load_weights("model/%s_model_weight.hdf5" % model_name)
