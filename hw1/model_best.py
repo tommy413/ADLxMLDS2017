@@ -65,7 +65,7 @@ def get_model(name):
 	if name == model_name[0]:
 		model = Sequential()
 		print('Building model.')
-		model.add(Bidirectional(GRU(500,dropout = 0.3,activation='relu', return_sequences=True)))
+		model.add(Bidirectional(GRU(500,dropout = 0.3,activation='relu', return_sequences=True),batch_input_shape = (None,Xtrain.shape[1],Xtrain.shape[2])))
 		model.add(Bidirectional(GRU(500,dropout = 0.3,activation='relu', return_sequences=True)))
 		model.add(Bidirectional(GRU(250,dropout = 0.3,activation='relu', return_sequences=True)))
 		model.add(Bidirectional(GRU(250,dropout = 0.3,activation='relu', return_sequences=True)))
@@ -119,9 +119,9 @@ def fit(model,earlystopping,checkpoint,name):
 
 	if not (os.path.exists("history/")):
 		os.makedirs("history/")
-	pkl.dump(hist, open("history/%s.pkl" % model_name,'wb'), pkl.HIGHEST_PROTOCOL)
+	pkl.dump(hist, open("history/%s.pkl" % name,'wb'), pkl.HIGHEST_PROTOCOL)
 
-	model.load_weights("model/%s_model_weight.hdf5" % model_name)
+	model.load_weights("model/%s_model_weight.hdf5" % name)
 
 	score = model.evaluate(Xval, Yval)
 

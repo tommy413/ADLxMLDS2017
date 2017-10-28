@@ -26,11 +26,11 @@ def trimming(seq):
 			last = i
 			if flag == 0 :
 				if i != 'L' :
-					if count >= 3 :
+					if count >= 2 :
 						new_seq = new_seq + i
 						flag = 1
 			elif flag == 1 :
-				if count >= 3 :
+				if count >= 2 :
 					if new_seq[-1] != i:
 						new_seq = new_seq + i
 			count = 1
