@@ -35,7 +35,7 @@ def data_input(dtype):
     feat = {}
     train_path = data_path + "training_data/"
     test_path = data_path + "testing_data/"
-    peer_path = data_path + "peer_review"
+    peer_path = data_path + "peer_review/"
     feat_path = ""
     
     if dtype == "train" :
