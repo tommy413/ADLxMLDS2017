@@ -17,7 +17,8 @@ import json
 
 data_path = sys.argv[1]
 model_name = "best"
-output_path = sys.argv[2]
+test_output_path = sys.argv[2]
+peer_output_path = sys.argv[3]
 nb_words = 2000
 max_len = 50
 latent_dim = 1024
@@ -34,12 +35,15 @@ def data_input(dtype):
     feat = {}
     train_path = data_path + "training_data/"
     test_path = data_path + "testing_data/"
+    peer_path = data_path + "peer_review"
     feat_path = ""
     
     if dtype == "train" :
         feat_path = train_path + "feat/"
     elif dtype == "test" :
         feat_path = test_path + "feat/"
+    elif dtype == "peer" :
+        feat_path = peer_path + "feat/"
     
     for path in os.listdir(feat_path):
         feat[path.replace(".npy","")] = np.load(feat_path + path)
@@ -78,6 +82,7 @@ def decoder_str(model,Xtest):
 	return ans
 
 test_dict = data_input("test")
+peer_dict = data_input("peer")
 
 print("Files loaded.")
 
@@ -115,8 +120,14 @@ model.load_weights("model/%s_model_weight.hdf5" % model_name)
 model.summary()
 print('Model loaded.')
 
-result_file = open(output_path,'w')
+test_result_file = open(test_output_path,'w')
 for ix in sorted(list(test_dict.keys())):
 	ans = decoder_str(model,np.array(test_dict[ix]))
-	result_file.write("%s,%s\n" % (ix,make_sen(ans)))
-result_file.close()
+	test_result_file.write("%s,%s\n" % (ix,make_sen(ans)))
+test_result_file.close()
+
+peer_result_file = open(peer_output_path,'w')
+for ix in sorted(list(peer_dict.keys())):
+	ans = decoder_str(model,np.array(peer_dict[ix]))
+	peer_result_file.write("%s,%s\n" % (ix,make_sen(ans)))
+peer_result_file.close()
