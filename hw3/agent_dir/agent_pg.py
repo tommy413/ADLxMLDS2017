@@ -50,10 +50,10 @@ class Agent_PG(Agent):
 
         super(Agent_PG,self).__init__(env)
 
-        self.state_size = 80*62
+        self.state_size = 80*80
         #self.action_size = env.get_action_space().n
         self.action_size = 3
-        self.gamma = 0.95
+        self.gamma = 0.99
         self.learning_rate = 0.001
         self.death = args.death_time
         self.model_name = args.model_name or "pong"
