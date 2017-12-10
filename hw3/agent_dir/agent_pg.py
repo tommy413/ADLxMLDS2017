@@ -75,7 +75,7 @@ class Agent_PG(Agent):
         ##################
         # YOUR CODE HERE #
         ##################
-        if args.train_pg:
+        elif args.train_pg:
             print('Building new model')
             self.model = self.build_model()
             self.model.summary()
