@@ -18,13 +18,11 @@ class Agent_DQN(Agent):
         self.action_size = env.get_action_space().n
         self.memory = deque(maxlen=50000)
         self.gamma = 0.99    # discount rate
-        # self.target_freq = 1000
-        # self.nn_freq = 4
         self.target_freq = 100
-        self.nn_freq = 2
+        self.nn_freq = 1
         self.learning_rate = 0.001
         self.model_name = args.model_name or "breakout"
-        self.death = args.death_time
+        self.death = args.death_time or 50000
         self.record = []
         self.nb_step = 0
         self.batch_size = 64
@@ -34,7 +32,7 @@ class Agent_DQN(Agent):
 
 
         if args.test_dqn:
-            self.epsilon = 0.001  # exploration rate
+            self.epsilon = 0.01  # exploration rate
             self.epsilon_range = 0.0
             self.epsilon_ratio = 0.0
             #you can load your model here
@@ -53,9 +51,8 @@ class Agent_DQN(Agent):
 
             print('Building new model')
             self.model = self.build_model()
-            self.model.summary()
             self.target_model = self.build_model()
-            #self.target_model.summary()
+            self.model.summary()
             with open("model/%s.json" % self.model_name, 'w') as f:
                 json.dump(self.model.to_json(), f)
             if not (os.path.exists("img/%s/" % self.model_name)):
@@ -84,10 +81,6 @@ class Agent_DQN(Agent):
         state_input = Input([84,84,4])
         action_input = Input([self.action_size])
 
-        # cnn = Convolution2D(32, (8, 8), activation="relu", padding="same", input_shape=(84, 84, 4), strides=(4, 4), )(state_input)
-        # cnn = Convolution2D(64, (4, 4), activation="relu", padding="same", strides=(2, 2))(cnn)
-        # cnn = Convolution2D(64, (3, 3), activation="relu", padding="same")(cnn)
-
         cnn = Convolution2D(32, (3,3), activation='relu', padding='same', input_shape=(84, 84, 4))(state_input)
         cnn = MaxPool2D((2,2))(cnn)
         cnn = Convolution2D(64, (3,3), activation='relu', padding='same')(cnn)
@@ -95,8 +88,6 @@ class Agent_DQN(Agent):
 
         dnn = Flatten()(cnn)
         dnn = Dense(512, activation='relu')(dnn)
-        #dnn = Dense(512)(dnn)
-        #dnn = LeakyReLU(alpha=0.01)(dnn)
         dnn = Dense(self.action_size, activation='linear')(dnn)
 
         result = Multiply()([dnn,action_input])
@@ -104,7 +95,6 @@ class Agent_DQN(Agent):
         model = kmodel.Model([state_input,action_input],result)
 
         opt = RMSprop(lr=self.learning_rate,rho=0.99)
-        #opt = Adam(lr=self.learning_rate)
         model.compile(loss='mse', optimizer=opt)
 
         return model
@@ -123,8 +113,6 @@ class Agent_DQN(Agent):
         for state, action, reward, next_state, done in minibatch:
             state = np.reshape(state, self.state_size)
             next_state = np.reshape(next_state, self.state_size)
-            # action_f = np.zeros((1,self.action_size),dtype="float64")
-            # action_f[0][action] = 1.0
             target = reward + (1-done)* self.gamma * np.amax(self.target_model.predict([next_state,self.make_action_f])[0])
 
             action_f = np.zeros((1,self.action_size),dtype="float64")
@@ -148,9 +136,11 @@ class Agent_DQN(Agent):
 
     def load(self):
         from keras.models import load_model,model_from_json
+        from keras.utils.vis_utils import plot_model
 
         self.model = model_from_json(json.load(open("model/%s.json" % self.model_name)))
-        self.model.load_weights("model/%s_model_weight.hdf5" % self.model_name)
+        plot_model(self.model,to_file=os.path.join("img","breakout.png"),show_shapes = True)
+        self.model.load_weights(os.path.join('model',"%s_model_weight.hdf5" % self.model_name))
 
     def save_record(self):
         import csv
@@ -171,7 +161,6 @@ class Agent_DQN(Agent):
 
     def plot_img(self):
         import matplotlib.pyplot as plt
-        #r = np.array(self.record)
 
         x = []
         y = []
@@ -207,7 +196,6 @@ class Agent_DQN(Agent):
             return random.randrange(self.action_size)
         observation = np.reshape(observation, self.state_size)
         act_values = self.model.predict([observation,self.make_action_f])[0]
-        #print(act_values)
         return np.argmax(act_values)
 
     def real_test(self):
@@ -215,7 +203,7 @@ class Agent_DQN(Agent):
         from environment import Environment
 
         e_bp = self.epsilon
-        self.epsilon = 0.001
+        self.epsilon = 0.01
         test_env = Environment('BreakoutNoFrameskip-v4', self.args, atari_wrapper=True, test=True)
         test(self, test_env, total_episodes=100)
         self.epsilon = e_bp
@@ -232,54 +220,35 @@ class Agent_DQN(Agent):
         score = 0
         episode = 0
         state = self.env.reset()
-        #state = np.reshape(state, self.state_size)
+        
+        while True:
+            action = self.make_action(state,test=False)
+            next_state, reward, done, info = self.env.step(action)
+            self.nb_step += 1
+            score += reward
+            self.remember(state, action, reward, next_state, done)
+            state = next_state
 
-        try:
-            while True:
-                action = self.make_action(state,test=False)
-                next_state, reward, done, info = self.env.step(action)
-                self.nb_step += 1
-                score += reward
-                self.remember(state, action, reward, next_state, done)
-                state = next_state
-
-                # decay = float(self.nb_step)/(self.epsilon_ratio*self.death) * self.epsilon_range
-                # self.epsilon = max(1.0 - decay, 1.0 - self.epsilon_range)
-
-                
-                
-
-                if done:
-                    episode += 1
-                    print('Step: %d - Episode: %d - Score: %f - E : %f. ' % (self.nb_step,episode, score, self.epsilon))
-                    self.record.append([episode, score])
-                    score = 0
-                    state = self.env.reset()
-                    decay = float(episode)/(self.epsilon_ratio*self.death) * self.epsilon_range
-                    self.epsilon = max(1.0 - decay, 1.0 - self.epsilon_range)
-                    if episode > 1 and episode % self.nn_freq == 0 and len(self.memory) > self.batch_size:
-                        self.fit()
-                    if episode > 1 and episode % self.target_freq == 0:
-                        self.update_target()
-                    if episode > 1 and episode % 10 == 0:
-                        self.save()
-                        self.save_record()
-                    if episode > 1 and episode % 1000 == 0:
-                        self.real_test()
-                    # if self.nb_step >= self.death :
-                    if episode >= self.death :
-                        self.save()
-                        self.save_record()
-                        self.plot_img()
-                        return
-        except KeyboardInterrupt:
-            if len(self.memory) > self.batch_size :
-                self.fit()
-            self.save()
-            self.save_record()
-            self.plot_img()
-            return
-            
-            # if e % 10 == 0:
-    #     agent.save("./save/cartpole-dqn.h5")
-
+            if done:
+                episode += 1
+                print('Step: %d - Episode: %d - Score: %f - E : %f. ' % (self.nb_step,episode, score, self.epsilon))
+                self.record.append([episode, score])
+                score = 0
+                state = self.env.reset()
+                decay = float(episode)/(self.epsilon_ratio*self.death) * self.epsilon_range
+                self.epsilon = max(1.0 - decay, 1.0 - self.epsilon_range)
+                if episode > 1 and episode % self.nn_freq == 0 and len(self.memory) > self.batch_size:
+                    self.fit()
+                if episode > 1 and episode % self.target_freq == 0:
+                    self.update_target()
+                if episode > 1 and episode % 10 == 0:
+                    self.save()
+                    self.save_record()
+                # if episode > 1 and episode % 1000 == 0:
+                #     self.real_test()
+                # if self.nb_step >= self.death :
+                if episode >= self.death :
+                    self.save()
+                    self.save_record()
+                    self.plot_img()
+                    return

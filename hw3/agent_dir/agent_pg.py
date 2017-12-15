@@ -1,33 +1,11 @@
 from agent_dir.agent import Agent
 import os
 import json
+import random
 import numpy as np
-
-# def preprocess(arr):
-#     from scipy.misc import imresize
-#     bg = (144, 72, 17)
-
-#     arr = arr[35:195,:,:]
-#     arr = arr[:,20:-16,:]
-#     arr = imresize(arr, (80,62), interp="nearest")
-
-#     grayscale = np.zeros((arr.shape[0],arr.shape[1]))
-#     for i in range(0,arr.shape[0]):
-#         for j in range(0,arr.shape[1]):
-#             # Precision 7
-#             #if arr[i][j].shape[0] == 3 :
-#             cond = (arr[i][j][0],arr[i][j][1],arr[i][j][2]) == bg
-#             grayscale[i][j] = 0 if cond else 1
-#             #elif arr[i][j].shape[0] == 1 :
-#                 #grayscale[i][j] = arr[i][j][0]
-
-#     #print(grayscale.sum(axis=0))
-#     #grayscale = (grayscale - grayscale.min())/(grayscale.max()+0.00001)
-#     return np.expand_dims(grayscale,axis=2)
 
 def preprocess(I):
     I = I[35:195]
-    #I = I[:,20:-16]
     I = I[::2, ::2, 0]
     I[I == 144] = 0
     I[I == 109] = 0
@@ -51,11 +29,10 @@ class Agent_PG(Agent):
         super(Agent_PG,self).__init__(env)
 
         self.state_size = 80*80
-        #self.action_size = env.get_action_space().n
         self.action_size = 3
         self.gamma = 0.99
         self.learning_rate = 0.001
-        self.death = args.death_time
+        self.death = args.death_time or 10000
         self.model_name = args.model_name or "pong"
         self.states = []
         self.gradients = []
@@ -106,7 +83,6 @@ class Agent_PG(Agent):
         from keras.layers.convolutional import Convolution2D
 
         model = Sequential()
-        #model.add(Reshape((1, 80, 80), ))
         model.add(Convolution2D(32, (6, 6), activation="relu", padding="same", input_shape=(80, 80, 1), strides=(3, 3), kernel_initializer="he_uniform"))
         model.add(Flatten())
         model.add(Dense(64, activation='relu', kernel_initializer='he_uniform'))
@@ -153,6 +129,8 @@ class Agent_PG(Agent):
         self.probs.append(aprob)
         action = np.random.choice(self.action_size, 1, p=aprob)[0]
         if test:
+            if np.random.rand() <= 0.01:
+                return random.randrange(self.action_size) + 1
             return action+1
         else :
             return action,aprob,x
@@ -177,8 +155,6 @@ class Agent_PG(Agent):
         gradients *= rewards
         X = np.squeeze(np.vstack([self.states]),axis = 1)
         Y = self.probs + self.learning_rate * np.squeeze(np.vstack([gradients]))
-        #Y[np.where(Y < 0.0)] = 0.0
-        #Y = softmax(Y)
         self.model.train_on_batch(X, Y)
         self.states, self.probs, self.gradients, self.rewards = [], [], [], []
 
@@ -188,13 +164,14 @@ class Agent_PG(Agent):
 
     def load(self):
         from keras.models import load_model,model_from_json
+        from keras.utils.vis_utils import plot_model
 
         self.model = model_from_json(json.load(open("model/%s.json" % self.model_name)))
+        plot_model(self.model,to_file=os.path.join("img","pong.png"),show_shapes = True)
         self.model.load_weights("model/%s_model_weight.hdf5" % self.model_name)
 
     def plot_img(self):
         import matplotlib.pyplot as plt
-        #r = np.array(self.record)
 
         x = []
         y = []
@@ -241,44 +218,28 @@ class Agent_PG(Agent):
         prev_x = None
 
         while True:
-            #self.env.render()
+            action, prob, x = self.make_action(state,test=False)
+            state, reward, done, info = self.env.step(action+1) #+1 is important
+            score += reward
+            self.remember(x, action, prob, reward)
 
-            # cur_x = state
-            # x = cur_x - prev_x if prev_x is not None else np.zeros(state.shape)
-            # prev_x = cur_x
-            # print(x.shape)
-            try:
-                action, prob, x = self.make_action(state,test=False)
-                state, reward, done, info = self.env.step(action+1) #+1 is important
-                score += reward
-                # state = preprocess(state)
-                self.remember(x, action, prob, reward)
-
-                if done:
-                    episode += 1
-                    print('Episode: %d - Score: %f.' % (episode, score))
-                    self.record.append([episode, score])
-                    score = 0
-                    state = self.env.reset()
-                    self.prev_x = None
-                    # if episode > 1 and episode % 5 == 0:
-                    self.fit()
-                    if episode > 1 and episode % 10 == 0:
-                        self.save()
-                        self.save_record()
-                        #self.plot_img()
-                    if episode == self.death :
-                        #self.fit()
-                        self.save()
-                        self.save_record()
-                        self.plot_img()
-                        return
-            except KeyboardInterrupt:
+            if done:
+                episode += 1
+                print('Episode: %d - Score: %f.' % (episode, score))
+                self.record.append([episode, score])
+                score = 0
+                state = self.env.reset()
+                self.prev_x = None
+                # if episode > 1 and episode % 5 == 0:
                 self.fit()
-                self.save()
-                self.save_record()
-                self.plot_img()
-                return
+                if episode > 1 and episode % 10 == 0:
+                    self.save()
+                    self.save_record()
+                if episode == self.death :
+                    self.save()
+                    self.save_record()
+                    self.plot_img()
+                    return
 
     
 

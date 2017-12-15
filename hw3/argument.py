@@ -8,6 +8,6 @@ def add_arguments(parser):
         parser.add_argument('--learning_rate', type=float, default=0.01, help='learning rate for training')
     '''
     parser.add_argument('--model_name', default=None, help='model directory')
-    parser.add_argument('--death_time', type=int, default=10000, help='Episodes to exit')
+    parser.add_argument('--death_time', type=int, default=None, help='Episodes to exit')
 
     return parser
