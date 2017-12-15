@@ -139,7 +139,7 @@ class Agent_DQN(Agent):
         from keras.utils.vis_utils import plot_model
 
         self.model = model_from_json(json.load(open("model/%s.json" % self.model_name)))
-        plot_model(self.model,to_file=os.path.join("img","breakout.png"),show_shapes = True)
+        #plot_model(self.model,to_file=os.path.join("img","breakout.png"),show_shapes = True)
         self.model.load_weights(os.path.join('model',"%s_model_weight.hdf5" % self.model_name))
 
     def save_record(self):

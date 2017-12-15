@@ -167,7 +167,7 @@ class Agent_PG(Agent):
         from keras.utils.vis_utils import plot_model
 
         self.model = model_from_json(json.load(open("model/%s.json" % self.model_name)))
-        plot_model(self.model,to_file=os.path.join("img","pong.png"),show_shapes = True)
+        #plot_model(self.model,to_file=os.path.join("img","pong.png"),show_shapes = True)
         self.model.load_weights("model/%s_model_weight.hdf5" % self.model_name)
 
     def plot_img(self):
