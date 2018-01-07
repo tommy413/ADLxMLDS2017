@@ -28,7 +28,7 @@ log = []
 
 # batch and latent size taken from the paper
 nb_epochs = 30000
-batch_size = 128
+batch_size = 64
 emb_size = 8
 latent_size = 100
 

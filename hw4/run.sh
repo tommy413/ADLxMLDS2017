@@ -1,2 +1,2 @@
 pip install h5py
-python test.py "$1"
+python3.5 test.py "$1"
