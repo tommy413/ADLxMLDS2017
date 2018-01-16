@@ -26,11 +26,11 @@ img_size = (64,64)
 
 def load_model():
     g = model_from_json(json.load(open(os.path.join("model/" ,"g.json" ))))
-    plot_model(g,to_file=os.path.join("model","g.png"),show_shapes = True)
+    #plot_model(g,to_file=os.path.join("model","g.png"),show_shapes = True)
     g.load_weights(os.path.join("model/","g_model_weight.hdf5" ))
 
     d = model_from_json(json.load(open(os.path.join("model/" ,"d.json" ))))
-    plot_model(d,to_file=os.path.join("model","d.png"),show_shapes = True)
+    #plot_model(d,to_file=os.path.join("model","d.png"),show_shapes = True)
     # d.load_weights(os.path.join("model/","d_model_weight.hdf5" ))
 
     return g,d
